@@ -40,7 +40,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 		{ 
 			//the slope must at least be WIDTH_SLOPE wide and is compared
 		    //to the mean of the image
-		    if(buffer[i] > mean && buffer[i+WIDTH_SLOPE] < mean)
+		    if(buffer[i] > mean && buffer[i+WIDTH_SLOPE]<mean)
 		    {
 		        begin = i;
 		        stop = 1;
@@ -54,7 +54,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 		    
 		    while(stop == 0 && i < IMAGE_BUFFER_SIZE)
 		    {
-		        if(buffer[i] > mean && buffer[i-WIDTH_SLOPE] < mean)
+		        if(buffer[i] > mean && buffer[i-WIDTH_SLOPE]<mean)
 		        {
 		            end = i;
 		            stop = 1;
@@ -80,6 +80,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 			stop = 0;
 			wrong_line = 1;
 		}
+
 	}while(wrong_line);
 
 	if(line_not_found){
@@ -97,6 +98,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 	}else{
 		return width;
 	}
+	return width;
 }
 
 static THD_WORKING_AREA(waCaptureImage, 256);
@@ -129,7 +131,9 @@ static THD_FUNCTION(ProcessImage, arg) {
     (void)arg;
 
 	uint8_t *img_buff_ptr;
-	uint8_t image[IMAGE_BUFFER_SIZE] = {0};
+	uint8_t imageRed[IMAGE_BUFFER_SIZE] = {0};
+	uint8_t imageBlue[IMAGE_BUFFER_SIZE]={0};
+	uint8_t imageGreen[IMAGE_BUFFER_SIZE]={0};
 	uint16_t lineWidth = 0;
 
 	bool send_to_computer = true;
@@ -144,11 +148,22 @@ static THD_FUNCTION(ProcessImage, arg) {
 		for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
 			//extracts first 5bits of the first byte
 			//takes nothing from the second byte
-			image[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
+			imageRed[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
+		}
+
+		//extract only the blue pixels
+		for(uint16_t i = 0; i<(2*IMAGE_BUFFER_SIZE); i+=2){
+			imageBlue[i/2] = (uint8_t)img_buff_ptr[i+1]&0x1F;
+		}
+
+		//extract only the Green pixels
+		for(uint16_t i = 0; i<(2*IMAGE_BUFFER_SIZE); i+=2){
+			imageGreen[i/2] = (uint8_t)img_buff_ptr[i]&0x07 << 5;
+			imageGreen[i/2]+= (uint8_t)img_buff_ptr[i+1]&0xE0;
 		}
 
 		//search for a line in the image and gets its width in pixels
-		lineWidth = extract_line_width(image);
+		lineWidth = extract_line_width(imageRed);
 
 		//converts the width into a distance between the robot and the camera
 		if(lineWidth){
@@ -157,7 +172,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 
 		if(send_to_computer){
 			//sends to the computer the image
-			SendUint8ToComputer(image, IMAGE_BUFFER_SIZE);
+			SendUint8ToComputer(imageRed, IMAGE_BUFFER_SIZE);
 		}
 		//invert the bool
 		send_to_computer = !send_to_computer;
