@@ -182,7 +182,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 		//converts the width into a distance between the robot and the camera
 		if(width){
 			//distance_cm = PXTOCM/width; //il faut changer ça car on utilise pas cette distance !!!
-			distance_cm = 5;
+			distance_cm = GOAL_DISTANCE; //j'ai mis une valeur pour les tests
 		}
 
 		if(send_to_computer){
