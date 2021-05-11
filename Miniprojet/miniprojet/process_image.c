@@ -19,7 +19,7 @@ static BSEMAPHORE_DECL(image_ready_sem, TRUE);
  *  Returns the line's width extracted from the image buffer given
  *  Returns 0 if line not found
  */
-uint16_t extract_line_width(uint8_t *buffer){
+uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen, uint8_t *bufferBlue){
 
 	uint16_t i = 0, begin = 0, end = 0, width = 0;
 	uint8_t stop = 0, wrong_line = 0, line_not_found = 0;
@@ -29,35 +29,40 @@ uint16_t extract_line_width(uint8_t *buffer){
 
 	//performs an average
 	for(uint16_t i = 0 ; i < IMAGE_BUFFER_SIZE ; i++){
-		mean += buffer[i];
+		mean += bufferRed[i];
 	}
 	mean /= IMAGE_BUFFER_SIZE;
 
 	do{
 		wrong_line = 0;
-		//search for a begin
+		//search for a begin------------------------------------------------------------------
 		while(stop == 0 && i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE))
 		{ 
 			//the slope must at least be WIDTH_SLOPE wide and is compared
 		    //to the mean of the image
-		    if(buffer[i] > mean && buffer[i+WIDTH_SLOPE]<mean)
+		    if(bufferRed[i] > RED_THRESHOLD)
 		    {
 		        begin = i;
 		        stop = 1;
 		    }
 		    i++;
 		}
-		//if a begin was found, search for an end
-		if (i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE) && begin)
+		//if a begin was found, search for an end---------------------------------------------Reflechir a faire une sorte de trigger de schmitt
+		if (i < (IMAGE_BUFFER_SIZE-WIDTH_SLOPE) && begin)
 		{
 		    stop = 0;
 		    
-		    while(stop == 0 && i < IMAGE_BUFFER_SIZE)
+		    while(stop == 0 && i <= IMAGE_BUFFER_SIZE)
 		    {
-		        if(buffer[i] > mean && buffer[i-WIDTH_SLOPE]<mean)
+		        if(bufferRed[i] > mean && bufferRed[i+WIDTH_SLOPE]<mean && i<IMAGE_BUFFER_SIZE-WIDTH_SLOPE)
 		        {
 		            end = i;
 		            stop = 1;
+		        }
+		        else if(bufferRed[i]<mean && i > IMAGE_BUFFER_SIZE-WIDTH_SLOPE)
+		        {
+		        	end = i;
+		        	stop = i;
 		        }
 		        i++;
 		    }
@@ -67,7 +72,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 		        line_not_found = 1;
 		    }
 		}
-		else//if no begin was found
+		else//if no begin was found----------------------------------------------------------
 		{
 		    line_not_found = 1;
 		}
@@ -83,6 +88,15 @@ uint16_t extract_line_width(uint8_t *buffer){
 
 	}while(wrong_line);
 
+	//search if blue and green pixels are activated
+	for(uint16_t i = 0; i < end; i++)
+	{
+		if(bufferGreen[i]>GREEN_THRESHOLD || bufferBlue[i]>BLUE_THRESHOLD)
+		{
+			line_not_found = 1;
+		}
+	}
+
 	if(line_not_found){
 		begin = 0;
 		end = 0;
@@ -92,12 +106,13 @@ uint16_t extract_line_width(uint8_t *buffer){
 		line_position = (begin + end)/2; //gives the line position.
 	}
 
-	//sets a maximum width or returns the measured width
+	/*//sets a maximum width or returns the measured width
 	if((PXTOCM/width) > MAX_DISTANCE){
 		return PXTOCM/MAX_DISTANCE;
 	}else{
 		return width;
-	}
+	}*/
+
 	return width;
 }
 
@@ -132,9 +147,9 @@ static THD_FUNCTION(ProcessImage, arg) {
 
 	uint8_t *img_buff_ptr;
 	uint8_t imageRed[IMAGE_BUFFER_SIZE] = {0};
-	uint8_t imageBlue[IMAGE_BUFFER_SIZE]={0};
-	uint8_t imageGreen[IMAGE_BUFFER_SIZE]={0};
-	uint16_t lineWidth = 0;
+	uint8_t imageBlue[IMAGE_BUFFER_SIZE] = {0};
+	uint8_t imageGreen[IMAGE_BUFFER_SIZE] = {0};
+	uint16_t width = 0;
 
 	bool send_to_computer = true;
 
@@ -161,13 +176,13 @@ static THD_FUNCTION(ProcessImage, arg) {
 			imageGreen[i/2] = (uint8_t)img_buff_ptr[i]&0x07 << 5;
 			imageGreen[i/2]+= (uint8_t)img_buff_ptr[i+1]&0xE0;
 		}
-
 		//search for a line in the image and gets its width in pixels
-		lineWidth = extract_line_width(imageRed);
+		width = extract_line_width(imageRed,imageGreen,imageBlue);
 
 		//converts the width into a distance between the robot and the camera
-		if(lineWidth){
-			distance_cm = PXTOCM/lineWidth;
+		if(width){
+			//distance_cm = PXTOCM/width; //il faut changer ça car on utilise pas cette distance !!!
+			distance_cm = 5;
 		}
 
 		if(send_to_computer){
