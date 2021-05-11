@@ -36,7 +36,8 @@ uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen, uint8_t *b
 	do{
 		wrong_line = 0;
 		//search for a begin------------------------------------------------------------------
-		while(stop == 0 && i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE))
+		//je regarde si le rouge est plus grand que RED_THRESHOLD que j'ai mis a 127 (moitier de 255)
+		while(stop == 0 && i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE)) //peut-être changer pour regarder moins loin dans le buffer
 		{ 
 			//the slope must at least be WIDTH_SLOPE wide and is compared
 		    //to the mean of the image
@@ -47,7 +48,8 @@ uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen, uint8_t *b
 		    }
 		    i++;
 		}
-		//if a begin was found, search for an end---------------------------------------------Reflechir a faire une sorte de trigger de schmitt
+		//if a begin was found, search for an end--------------------------------------------- Reflechir a faire une sorte de trigger de schmitt
+		//je regarde quand ça s'arrête (ça peut s'arreter au dernier pixel)
 		if (i < (IMAGE_BUFFER_SIZE-WIDTH_SLOPE) && begin)
 		{
 		    stop = 0;
@@ -88,7 +90,7 @@ uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen, uint8_t *b
 
 	}while(wrong_line);
 
-	//search if blue and green pixels are activated
+	//search if blue and green pixels are activated--------------------------------------------
 	for(uint16_t i = 0; i < end; i++)
 	{
 		if(bufferGreen[i]>GREEN_THRESHOLD || bufferBlue[i]>BLUE_THRESHOLD)
