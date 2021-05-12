@@ -14,9 +14,12 @@ extern "C" {
 #define IMAGE_BUFFER_SIZE		640
 #define WIDTH_SLOPE				5
 #define MIN_LINE_WIDTH			40
-#define RED_THRESHOLD			160
-#define GREEN_THRESHOLD			100
-#define BLUE_THRESHOLD			100
+
+#define RED_THRESHOLD			100
+#define RED_THRESHOLD_LOW		60
+#define GREEN_THRESHOLD			50
+#define BLUE_THRESHOLD			50
+
 #define ROTATION_THRESHOLD		10
 #define ROTATION_COEFF			2 
 #define PXTOCM					1570.0f //experimental value

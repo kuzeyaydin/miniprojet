@@ -10,7 +10,7 @@
 
 
 static float distance_cm = 0;
-static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle
+static uint16_t line_position = 0; //IMAGE_BUFFER_SIZE/2;	//middle //comme ça il tourne tant qu'il n'a pas trouver de ligne
 
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
@@ -34,7 +34,48 @@ uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen, uint8_t *b
 	mean /= IMAGE_BUFFER_SIZE;
 
 	do{
-		wrong_line = 0;
+
+		wrong_line =0;
+		while(stop == 0 && i<(IMAGE_BUFFER_SIZE-WIDTH_SLOPE))
+		{
+			if(bufferRed[i]>RED_THRESHOLD && bufferGreen[i] < GREEN_THRESHOLD && bufferBlue[i]<BLUE_THRESHOLD)
+			{
+				begin = i;
+				stop = 1;
+			}
+			i++;
+		}
+		if(begin && i <= (IMAGE_BUFFER_SIZE - WIDTH_SLOPE))
+		{
+			stop = 0;
+			while(!stop && i<=IMAGE_BUFFER_SIZE)
+			{
+				if(bufferRed[i]<RED_THRESHOLD_LOW ||bufferGreen[i]>GREEN_THRESHOLD || bufferBlue[i]>BLUE_THRESHOLD)
+				{
+					end = i;
+					stop = 1;
+				}
+				i++;
+			}
+			if(!end)
+			{
+				end = IMAGE_BUFFER_SIZE;
+			}
+		}
+		else
+		{
+			line_not_found = 1;
+		}
+
+		if(!line_not_found && (end -begin)< MIN_LINE_WIDTH)
+		{
+			i = end;
+			begin = 0;
+			end = 0;
+			stop = 0;
+			wrong_line = 1;
+		}
+/*		wrong_line = 0;
 		//search for a begin------------------------------------------------------------------
 		//je regarde si le rouge est plus grand que RED_THRESHOLD que j'ai mis a 127 (moitier de 255)
 		while(stop == 0 && i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE)) //peut-être changer pour regarder moins loin dans le buffer
@@ -87,22 +128,23 @@ uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen, uint8_t *b
 			stop = 0;
 			wrong_line = 1;
 		}
-
+*/
 	}while(wrong_line);
 
 	//search if blue and green pixels are activated--------------------------------------------
-	for(uint16_t i = 0; i < end; i++)
+/*	for(uint16_t i = begin; i < end; i++)
 	{
 		if(bufferGreen[i]>GREEN_THRESHOLD || bufferBlue[i]>BLUE_THRESHOLD)
 		{
 			line_not_found = 1;
 		}
 	}
-
+*/
 	if(line_not_found){
 		begin = 0;
 		end = 0;
 		width = last_width;
+		line_position = 0;
 	}else{
 		last_width = width = (end - begin);
 		line_position = (begin + end)/2; //gives the line position.
@@ -124,14 +166,12 @@ static THD_FUNCTION(CaptureImage, arg) {
     chRegSetThreadName(__FUNCTION__);
     (void)arg;
 
-    po8030_set_awb(0);
-
 	//Takes pixels 0 to IMAGE_BUFFER_SIZE of the line 10 + 11 (minimum 2 lines because reasons)
 	po8030_advanced_config(FORMAT_RGB565, 0, 10, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1, SUBSAMPLING_X1);
 	dcmi_enable_double_buffering();
 	dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
 	dcmi_prepare();
-
+	po8030_set_awb(0);
     while(1){
         //starts a capture
 		dcmi_capture_start();
@@ -143,7 +183,7 @@ static THD_FUNCTION(CaptureImage, arg) {
 }
 
 
-static THD_WORKING_AREA(waProcessImage, 1024);
+static THD_WORKING_AREA(waProcessImage, 4048);
 static THD_FUNCTION(ProcessImage, arg) {
 
     chRegSetThreadName(__FUNCTION__);
@@ -178,8 +218,9 @@ static THD_FUNCTION(ProcessImage, arg) {
 		//extract only the Green pixels
 		for(uint16_t i = 0; i<(2*IMAGE_BUFFER_SIZE); i+=2){
 			imageGreen[i/2] = (uint8_t)img_buff_ptr[i]&0x07 << 5;
-			imageGreen[i/2]+= (uint8_t)img_buff_ptr[i+1]&0xE0;
+			imageGreen[i/2]+= ((uint8_t)img_buff_ptr[i+1]&0xE0>>3);
 		}
+
 		//search for a line in the image and gets its width in pixels
 		width = extract_line_width(imageRed,imageGreen,imageBlue);
 
