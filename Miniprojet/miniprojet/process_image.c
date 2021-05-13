@@ -26,19 +26,19 @@ uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen, uint8_t *b
 	uint32_t mean = 0;
 
 	static uint16_t last_width = PXTOCM/GOAL_DISTANCE;
-
+/*
 	//performs an average
 	for(uint16_t i = 0 ; i < IMAGE_BUFFER_SIZE ; i++){
 		mean += bufferRed[i];
 	}
 	mean /= IMAGE_BUFFER_SIZE;
-
+*/
 	do{
 
-		wrong_line =0;
-		while(stop == 0 && i<(IMAGE_BUFFER_SIZE-WIDTH_SLOPE))
+		wrong_line = 0;
+		while(stop == 0 && i<(IMAGE_BUFFER_SIZE - WIDTH_SLOPE))
 		{
-			if(bufferRed[i]>RED_THRESHOLD && bufferGreen[i] < GREEN_THRESHOLD && bufferBlue[i]<BLUE_THRESHOLD)
+			if(bufferRed[i]>RED_THRESHOLD && bufferGreen[i] < GREEN_THRESHOLD && bufferBlue[i] < BLUE_THRESHOLD)
 			{
 				begin = i;
 				stop = 1;

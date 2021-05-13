@@ -16,9 +16,10 @@ extern "C" {
 #define MIN_LINE_WIDTH			40
 
 #define RED_THRESHOLD			100
-#define RED_THRESHOLD_LOW		60
-#define GREEN_THRESHOLD			50
-#define BLUE_THRESHOLD			50
+#define RED_THRESHOLD_LOW		80
+
+#define GREEN_THRESHOLD			80
+#define BLUE_THRESHOLD			80
 
 #define ROTATION_THRESHOLD		10
 #define ROTATION_COEFF			2 
