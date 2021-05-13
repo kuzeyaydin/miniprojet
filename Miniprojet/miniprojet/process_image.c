@@ -44,7 +44,7 @@ uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen, uint8_t *b
 		wrong_line = 0;
 		while(stop == 0 && i<(IMAGE_BUFFER_SIZE - WIDTH_SLOPE))
 		{
-			if(bufferBlue[i] > meanBlue && bufferBlue[i+WIDTH_SLOPE]<meanBlue)
+			if(bufferGreen[i] > meanGreen && bufferGreen[i+WIDTH_SLOPE]<meanGreen)
 			{
 				begin = i;
 				stop = 1;
@@ -56,7 +56,7 @@ uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen, uint8_t *b
 			stop = 0;
 			while(!stop && i<=IMAGE_BUFFER_SIZE)
 			{
-				if(bufferBlue[i]>meanBlue && bufferBlue[i-WIDTH_SLOPE] < meanBlue)
+				if(bufferGreen[i]>meanGreen && bufferGreen[i-WIDTH_SLOPE] < meanGreen)
 				{
 					end = i;
 					stop = 1;
@@ -200,6 +200,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 	uint8_t imageRed[IMAGE_BUFFER_SIZE] = {0};
 	uint8_t imageBlue[IMAGE_BUFFER_SIZE] = {0};
 	uint8_t imageGreen[IMAGE_BUFFER_SIZE] = {0};
+	uint8_t firstGreen=0;
 	uint16_t width = 0;
 
 	bool send_to_computer = true;
@@ -224,8 +225,8 @@ static THD_FUNCTION(ProcessImage, arg) {
 
 		//extract only the Green pixels
 		for(uint16_t i = 0; i<(2*IMAGE_BUFFER_SIZE); i+=2){
-			imageGreen[i/2] = (uint8_t)img_buff_ptr[i]&0x07 << 3;
-			imageGreen[i/2]+= ((uint8_t)img_buff_ptr[i+1]&0xE0>>5);
+			imageGreen[i/2] = (uint8_t)img_buff_ptr[i]&0x07;// << 3;
+			//imageGreen[i/2]+= ((uint8_t)img_buff_ptr[i+1]&0xE0 >> 5);
 		}
 
 		//search for a line in the image and gets its width in pixels
