@@ -44,7 +44,7 @@ uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen, uint8_t *b
 		wrong_line = 0;
 		while(stop == 0 && i<(IMAGE_BUFFER_SIZE - WIDTH_SLOPE))
 		{
-			if(bufferGreen[i] > meanGreen && bufferGreen[i+WIDTH_SLOPE]<meanGreen)
+			if((bufferRed[i]>(meanRed-RED_THRESHOLD))&&(bufferBlue[i] > meanBlue && bufferBlue[i+WIDTH_SLOPE]<meanBlue)&&(bufferGreen[i] > meanGreen && bufferGreen[i+WIDTH_SLOPE]<meanGreen))
 			{
 				begin = i;
 				stop = 1;
@@ -56,7 +56,7 @@ uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen, uint8_t *b
 			stop = 0;
 			while(!stop && i<=IMAGE_BUFFER_SIZE)
 			{
-				if(bufferGreen[i]>meanGreen && bufferGreen[i-WIDTH_SLOPE] < meanGreen)
+				if((bufferRed[i]<(meanRed-RED_THRESHOLD))||(bufferBlue[i]>meanBlue && bufferBlue[i-WIDTH_SLOPE] < meanBlue)||(bufferGreen[i]>meanGreen && bufferGreen[i-WIDTH_SLOPE] < meanGreen))
 				{
 					end = i;
 					stop = 1;
@@ -81,71 +81,9 @@ uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen, uint8_t *b
 			stop = 0;
 			wrong_line = 1;
 		}
-/*		wrong_line = 0;
-		//search for a begin------------------------------------------------------------------
-		//je regarde si le rouge est plus grand que RED_THRESHOLD que j'ai mis a 127 (moitier de 255)
-		while(stop == 0 && i < (IMAGE_BUFFER_SIZE - WIDTH_SLOPE)) //peut-être changer pour regarder moins loin dans le buffer
-		{ 
-			//the slope must at least be WIDTH_SLOPE wide and is compared
-		    //to the mean of the image
-		    if(bufferRed[i] > RED_THRESHOLD)
-		    {
-		        begin = i;
-		        stop = 1;
-		    }
-		    i++;
-		}
-		//if a begin was found, search for an end--------------------------------------------- Reflechir a faire une sorte de trigger de schmitt
-		//je regarde quand ça s'arrête (ça peut s'arreter au dernier pixel)
-		if (i < (IMAGE_BUFFER_SIZE-WIDTH_SLOPE) && begin)
-		{
-		    stop = 0;
-		    
-		    while(stop == 0 && i <= IMAGE_BUFFER_SIZE)
-		    {
-		        if(bufferRed[i] > mean && bufferRed[i+WIDTH_SLOPE]<mean && i<IMAGE_BUFFER_SIZE-WIDTH_SLOPE)
-		        {
-		            end = i;
-		            stop = 1;
-		        }
-		        else if(bufferRed[i]<mean && i > IMAGE_BUFFER_SIZE-WIDTH_SLOPE)
-		        {
-		        	end = i;
-		        	stop = i;
-		        }
-		        i++;
-		    }
-		    //if an end was not found
-		    if (i > IMAGE_BUFFER_SIZE || !end)
-		    {
-		        line_not_found = 1;
-		    }
-		}
-		else//if no begin was found----------------------------------------------------------
-		{
-		    line_not_found = 1;
-		}
 
-		//if a line too small has been detected, continues the search
-		if(!line_not_found && (end-begin) < MIN_LINE_WIDTH){
-			i = end;
-			begin = 0;
-			end = 0;
-			stop = 0;
-			wrong_line = 1;
-		}
-*/
 	}while(wrong_line);
 
-	//search if blue and green pixels are activated--------------------------------------------
-/*	for(uint16_t i = begin; i < end; i++)
-	{
-		if(bufferGreen[i]>GREEN_THRESHOLD || bufferBlue[i]>BLUE_THRESHOLD)
-		{
-			line_not_found = 1;
-		}
-	}
-*/
 	if(line_not_found){
 		begin = 0;
 		end = 0;
@@ -155,13 +93,6 @@ uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen, uint8_t *b
 		last_width = width = (end - begin);
 		line_position = (begin + end)/2; //gives the line position.
 	}
-
-	/*//sets a maximum width or returns the measured width
-	if((PXTOCM/width) > MAX_DISTANCE){
-		return PXTOCM/MAX_DISTANCE;
-	}else{
-		return width;
-	}*/
 
 	return width;
 }
@@ -225,8 +156,8 @@ static THD_FUNCTION(ProcessImage, arg) {
 
 		//extract only the Green pixels
 		for(uint16_t i = 0; i<(2*IMAGE_BUFFER_SIZE); i+=2){
-			imageGreen[i/2] = (uint8_t)img_buff_ptr[i]&0x07;// << 3;
-			//imageGreen[i/2]+= ((uint8_t)img_buff_ptr[i+1]&0xE0 >> 5);
+			imageGreen[i/2] = ((uint8_t)img_buff_ptr[i]&0x07 )*8;		// *8 car bit shift ne fonctionne pas
+			imageGreen[i/2]+= ((uint8_t)img_buff_ptr[i+1]&0xE0)/32;
 		}
 
 		//search for a line in the image and gets its width in pixels
@@ -240,7 +171,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 
 		if(send_to_computer){
 			//sends to the computer the image
-			SendUint8ToComputer(imageRed, IMAGE_BUFFER_SIZE);
+			SendUint8ToComputer(imageBlue, IMAGE_BUFFER_SIZE);
 		}
 		//invert the bool
 		send_to_computer = !send_to_computer;
