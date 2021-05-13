@@ -23,22 +23,28 @@ uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen, uint8_t *b
 
 	uint16_t i = 0, begin = 0, end = 0, width = 0;
 	uint8_t stop = 0, wrong_line = 0, line_not_found = 0;
-	uint32_t mean = 0;
+	uint32_t meanRed = 0, meanGreen = 0, meanBlue = 0;
+
 
 	static uint16_t last_width = PXTOCM/GOAL_DISTANCE;
-/*
+
 	//performs an average
 	for(uint16_t i = 0 ; i < IMAGE_BUFFER_SIZE ; i++){
-		mean += bufferRed[i];
+		meanRed += bufferRed[i];
+		meanGreen += bufferGreen[i];
+		meanBlue += bufferBlue[i];
 	}
-	mean /= IMAGE_BUFFER_SIZE;
-*/
+	meanRed /= IMAGE_BUFFER_SIZE;
+	meanGreen /= IMAGE_BUFFER_SIZE;
+	meanBlue /= IMAGE_BUFFER_SIZE;
+
+
 	do{
 
 		wrong_line = 0;
 		while(stop == 0 && i<(IMAGE_BUFFER_SIZE - WIDTH_SLOPE))
 		{
-			if(bufferRed[i]>RED_THRESHOLD && bufferGreen[i] < GREEN_THRESHOLD && bufferBlue[i] < BLUE_THRESHOLD)
+			if(bufferRed[i] >= (meanRed - RED_THRESHOLD) && bufferGreen[i] < (meanGreen + GREEN_THRESHOLD) && bufferBlue[i] < (meanBlue + BLUE_THRESHOLD))
 			{
 				begin = i;
 				stop = 1;
@@ -50,7 +56,7 @@ uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen, uint8_t *b
 			stop = 0;
 			while(!stop && i<=IMAGE_BUFFER_SIZE)
 			{
-				if(bufferRed[i]<RED_THRESHOLD_LOW ||bufferGreen[i]>GREEN_THRESHOLD || bufferBlue[i]>BLUE_THRESHOLD)
+				if(bufferRed[i] < (meanRed-RED_THRESHOLD) || bufferGreen[i]>meanGreen || bufferBlue[i]>meanBlue)
 				{
 					end = i;
 					stop = 1;
@@ -179,6 +185,7 @@ static THD_FUNCTION(CaptureImage, arg) {
 		wait_image_ready();
 		//signals an image has been captured
 		chBSemSignal(&image_ready_sem);
+
     }
 }
 
@@ -217,8 +224,8 @@ static THD_FUNCTION(ProcessImage, arg) {
 
 		//extract only the Green pixels
 		for(uint16_t i = 0; i<(2*IMAGE_BUFFER_SIZE); i+=2){
-			imageGreen[i/2] = (uint8_t)img_buff_ptr[i]&0x07 << 5;
-			imageGreen[i/2]+= ((uint8_t)img_buff_ptr[i+1]&0xE0>>3);
+			imageGreen[i/2] = (uint8_t)img_buff_ptr[i]&0x07 << 3;
+			imageGreen[i/2]+= ((uint8_t)img_buff_ptr[i+1]&0xE0>>5);
 		}
 
 		//search for a line in the image and gets its width in pixels

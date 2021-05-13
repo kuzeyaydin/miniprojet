@@ -15,11 +15,9 @@ extern "C" {
 #define WIDTH_SLOPE				5
 #define MIN_LINE_WIDTH			40
 
-#define RED_THRESHOLD			100
-#define RED_THRESHOLD_LOW		80
-
-#define GREEN_THRESHOLD			80
-#define BLUE_THRESHOLD			80
+#define RED_THRESHOLD			16 //le rouge est stocké a gauche on multiplie donc le threshold de base (qui est 2) par 8=16
+#define GREEN_THRESHOLD			10
+#define BLUE_THRESHOLD			5
 
 #define ROTATION_THRESHOLD		10
 #define ROTATION_COEFF			2 
