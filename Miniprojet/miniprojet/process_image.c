@@ -10,7 +10,7 @@
 
 
 static float distance_cm = 0;
-static uint16_t line_position = 0; //IMAGE_BUFFER_SIZE/2;	//middle //comme ça il tourne tant qu'il n'a pas trouver de ligne
+static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle //comme ça il tourne tant qu'il n'a pas trouver de ligne
 
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
@@ -44,7 +44,7 @@ uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen, uint8_t *b
 		wrong_line = 0;
 		while(stop == 0 && i<(IMAGE_BUFFER_SIZE - WIDTH_SLOPE))
 		{
-			if(bufferRed[i] >= (meanRed - RED_THRESHOLD) && bufferGreen[i] < (meanGreen + GREEN_THRESHOLD) && bufferBlue[i] < (meanBlue + BLUE_THRESHOLD))
+			if(bufferBlue[i] > meanBlue && bufferBlue[i+WIDTH_SLOPE]<meanBlue)
 			{
 				begin = i;
 				stop = 1;
@@ -56,7 +56,7 @@ uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen, uint8_t *b
 			stop = 0;
 			while(!stop && i<=IMAGE_BUFFER_SIZE)
 			{
-				if(bufferRed[i] < (meanRed-RED_THRESHOLD) || bufferGreen[i]>meanGreen || bufferBlue[i]>meanBlue)
+				if(bufferBlue[i]>meanBlue && bufferBlue[i-WIDTH_SLOPE] < meanBlue)
 				{
 					end = i;
 					stop = 1;
@@ -150,7 +150,7 @@ uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen, uint8_t *b
 		begin = 0;
 		end = 0;
 		width = last_width;
-		line_position = 0;
+		line_position = IMAGE_BUFFER_SIZE/2;
 	}else{
 		last_width = width = (end - begin);
 		line_position = (begin + end)/2; //gives the line position.
