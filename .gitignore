@@ -2,8 +2,9 @@
 lib
 #build files not necessary, project will be totally compiled for each time
 build
-#removing documentation
+#removing documentation and extra files
 .pdf
+.png
 
 .DS_Store
 
