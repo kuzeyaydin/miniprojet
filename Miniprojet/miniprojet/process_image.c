@@ -9,7 +9,7 @@
 #include <process_image.h>
 
 static float distance_cm = 0;
-static uint16_t line_position = 0;//IMAGE_BUFFER_SIZE / 2;//middle //comme �a il tourne tant qu'il n'a pas trouver de ligne
+static uint16_t line_position = 0;//IMAGE_BUFFER_SIZE / 2;//middle //comme ça il tourne tant qu'il n'a pas trouver de ligne
 
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
@@ -172,6 +172,11 @@ uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen,
 static THD_WORKING_AREA(waCaptureImage, 256);
 static THD_FUNCTION(CaptureImage, arg) {
 
+	systime_t time;
+	time = chVTGetSystemTime();
+	//-> Functions to measure <-//
+	chprintf((BaseSequentialStream *)&SDU1, "capture␣time␣=␣%d\n", chVTGetSystemTime()-time);
+
 	chRegSetThreadName(__FUNCTION__);
 	(void) arg;
 
@@ -235,7 +240,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 		width = extract_line_width(imageRed, imageGreen, imageBlue);
 		//converts the width into a distance between the robot and the camera
 		if (width) {
-			//distance_cm = PXTOCM/width; //il faut changer �a car on utilise pas cette distance !!!
+			//distance_cm = PXTOCM/width; //il faut changer ça car on utilise pas cette distance !!!
 			distance_cm = GOAL_DISTANCE; //j'ai mis une valeur pour les tests
 		}
 
