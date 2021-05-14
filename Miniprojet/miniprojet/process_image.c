@@ -9,7 +9,7 @@
 #include <process_image.h>
 
 static float distance_cm = 0;
-static uint16_t line_position = IMAGE_BUFFER_SIZE / 2;//middle //comme ça il tourne tant qu'il n'a pas trouver de ligne
+static uint16_t line_position = STARTING_POS;//0; //IMAGE_BUFFER_SIZE / 2;//middle //0 comme ça il tourne tant qu'il n'a pas trouver de ligne
 
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
@@ -35,7 +35,7 @@ uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen,
 	}
 	meanRed /= IMAGE_BUFFER_SIZE;
 	meanGreen /= IMAGE_BUFFER_SIZE;
-	meanBlue /= IMAGE_BUFFER_SIZE;
+	meanBlue = (meanBlue / IMAGE_BUFFER_SIZE) - BLUE_THRESHOLD;
 
 	do {
 		wrong_line = 0;
@@ -161,7 +161,7 @@ uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen,
 		end = 0;
 		//width = last_width;
 		width = 0;
-		line_position = IMAGE_BUFFER_SIZE / 2;
+		line_position = STARTING_POS;//0;//IMAGE_BUFFER_SIZE / 2;
 	} else {
 		last_width = width = (end - begin);
 		line_position = (begin + end) / 2; //gives the line position.
@@ -234,7 +234,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 
 		//extract only the Green pixels
 		for (uint16_t i = 0; i < (2 * IMAGE_BUFFER_SIZE); i += 2) {
-			imageGreen[i / 2] = ((uint8_t) img_buff_ptr[i] & 0x07) * 8;	// *8 car bit shift ne fonctionne pas
+			imageGreen[i / 2] = ((uint8_t) img_buff_ptr[i] & 0x07) * 8;		 // *8 car bit shift ne fonctionne pas
 			imageGreen[i / 2] += ((uint8_t) img_buff_ptr[i + 1] & 0xE0) / 32;
 		}
 
@@ -253,7 +253,7 @@ static THD_FUNCTION(ProcessImage, arg) {
 		if (send_to_computer) {
 
 			//sends to the computer the image
-			//SendUint8ToComputer(imageBlue, IMAGE_BUFFER_SIZE);
+			SendUint8ToComputer(imageRed, IMAGE_BUFFER_SIZE);
 		}
 		//invert the bool
 		send_to_computer = !send_to_computer;

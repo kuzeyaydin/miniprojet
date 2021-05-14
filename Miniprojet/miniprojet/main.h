@@ -15,9 +15,11 @@ extern "C" {
 #define WIDTH_SLOPE				5
 #define MIN_LINE_WIDTH			40
 
-#define RED_THRESHOLD			16 //le rouge est stocké a gauche on multiplie donc le threshold de base (qui est 2) par 8=16
+#define RED_THRESHOLD			32 //le rouge est stocké a gauche on multiplie donc le threshold de base (qui est 2) par 8=16
 #define GREEN_THRESHOLD			10
-#define BLUE_THRESHOLD			5
+#define BLUE_THRESHOLD			7
+
+#define STARTING_POS			7*IMAGE_BUFFER_SIZE/16 //IMAGE_BUFFER_SIZE/2 pour ne pas bouger
 
 #define ROTATION_THRESHOLD		10
 #define ROTATION_COEFF			0.5  //2
@@ -26,7 +28,7 @@ extern "C" {
 #define MAX_DISTANCE 			25.0f
 #define ERROR_THRESHOLD_ROT		5 		//[px] a cause du bruit de la camera
 #define ERROR_THRESHOLD_DIST	0.5f	//[cm] because of the noise of the camera
-#define KP						8.0f
+#define KP						4.0f
 #define KI 						0.1f	//must not be zero //3.5f Initially
 #define KP_D					100.0f
 #define KI_D					1.0f
