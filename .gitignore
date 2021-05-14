@@ -1,5 +1,10 @@
+#everyone has library
 lib
+#build files not necessary, project will be totally compiled for each time
 build
+#removing documentation
+.pdf
+
 .DS_Store
 
 # Prerequisites
