@@ -11,32 +11,62 @@
 #include <process_image.h>
 
 //simple PI regulator implementation
-int16_t pi_regulator(float distance, float goal){
+int16_t pi_regulator_rotation(float distance, float goal){
 
 	float error = 0;
 	float speed = 0;
 
-	static float sum_error = 0;
+	static float sum_error_rot = 0;
+
+	error = distance - goal;
+
+	//disables the PI regulator if the error is to small
+	//this avoids to always move as we cannot exactly be where we want and
+	//the camera is a bit noisy
+	if(fabs(error) < ERROR_THRESHOLD_ROT){
+		return 0;
+	}
+
+	sum_error_rot += error;
+
+	//we set a maximum and a minimum for the sum to avoid an uncontrolled growth
+	if(sum_error_rot > MAX_SUM_ERROR){
+		sum_error_rot = MAX_SUM_ERROR;
+	}else if(sum_error_rot < -MAX_SUM_ERROR){
+		sum_error_rot = -MAX_SUM_ERROR;
+	}
+
+	speed = KP * error + KI * sum_error_rot;
+
+    return (int16_t)speed;
+}
+
+int16_t pi_regulator_distance(float distance, float goal){
+
+	float error = 0;
+	float speed = 0;
+
+	static float sum_error_dist = 0;
 
 	error = distance - goal;
 
 	//disables the PI regulator if the error is to small
 	//this avoids to always move as we cannot exactly be where we want and 
 	//the camera is a bit noisy
-	if(fabs(error) < ERROR_THRESHOLD){
+	if(fabs(error) < ERROR_THRESHOLD_DIST){
 		return 0;
 	}
 
-	sum_error += error;
+	sum_error_dist += error;
 
 	//we set a maximum and a minimum for the sum to avoid an uncontrolled growth
-	if(sum_error > MAX_SUM_ERROR){
-		sum_error = MAX_SUM_ERROR;
-	}else if(sum_error < -MAX_SUM_ERROR){
-		sum_error = -MAX_SUM_ERROR;
+	if(sum_error_dist > MAX_SUM_ERROR){
+		sum_error_dist = MAX_SUM_ERROR;
+	}else if(sum_error_dist < -MAX_SUM_ERROR){
+		sum_error_dist = -MAX_SUM_ERROR;
 	}
 
-	speed = KP * error + KI * sum_error;
+	speed = KP_D * error + KI_D * sum_error_dist;
 
     return (int16_t)speed;
 }
@@ -57,9 +87,10 @@ static THD_FUNCTION(PiRegulator, arg) {
         
         //computes the speed to give to the motors
         //distance_cm is modified by the image processing thread
-        speed = pi_regulator(get_distance_cm(), GOAL_DISTANCE);
+        //speed = pi_regulator_distance(get_distance_cm(), GOAL_DISTANCE);
         //computes a correction factor to let the robot rotate to be in front of the line
-        speed_correction = (get_line_position() - (IMAGE_BUFFER_SIZE/2));
+        //speed_correction = (get_line_position() - (IMAGE_BUFFER_SIZE/2)); //on utilise pas de pi pour la rotation ??
+        speed_correction = pi_regulator_rotation(get_line_position(),(IMAGE_BUFFER_SIZE/2));
 
         //if the line is nearly in front of the camera, don't rotate
         if(abs(speed_correction) < ROTATION_THRESHOLD){

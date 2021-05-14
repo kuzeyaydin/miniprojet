@@ -9,7 +9,7 @@
 #include <process_image.h>
 
 static float distance_cm = 0;
-static uint16_t line_position = 0;//IMAGE_BUFFER_SIZE / 2;//middle //comme ça il tourne tant qu'il n'a pas trouver de ligne
+static uint16_t line_position = IMAGE_BUFFER_SIZE / 2;//middle //comme ça il tourne tant qu'il n'a pas trouver de ligne
 
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
@@ -22,7 +22,7 @@ uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen,
 		uint8_t *bufferBlue) {
 
 	uint16_t i = 0, begin = 0, end = 0, width = 0;
-	uint8_t stop = 0, wrong_line = 0, blue_not_found = 0,green_not_found =0,red_not_found = 1;
+	uint8_t stop = 0, wrong_line = 0, blue_not_found = 0, green_not_found =0, red_not_found = 1;
 	uint32_t meanRed = 0, meanGreen = 0, meanBlue = 0;
 
 	static uint16_t last_width = PXTOCM / GOAL_DISTANCE;
@@ -159,8 +159,9 @@ uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen,
 	if (green_not_found || blue_not_found || !red_not_found) {
 		begin = 0;
 		end = 0;
-		width = last_width;
-		line_position = 0;//IMAGE_BUFFER_SIZE / 2;
+		//width = last_width;
+		width = 0;
+		line_position = IMAGE_BUFFER_SIZE / 2;
 	} else {
 		last_width = width = (end - begin);
 		line_position = (begin + end) / 2; //gives the line position.
@@ -172,10 +173,11 @@ uint16_t extract_line_width(uint8_t *bufferRed, uint8_t *bufferGreen,
 static THD_WORKING_AREA(waCaptureImage, 256);
 static THD_FUNCTION(CaptureImage, arg) {
 
-	systime_t time;
+	/*systime_t time;
 	time = chVTGetSystemTime();
 	//-> Functions to measure <-//
 	chprintf((BaseSequentialStream *)&SDU1, "capture␣time␣=␣%d\n", chVTGetSystemTime()-time);
+	*/
 
 	chRegSetThreadName(__FUNCTION__);
 	(void) arg;
@@ -240,8 +242,12 @@ static THD_FUNCTION(ProcessImage, arg) {
 		width = extract_line_width(imageRed, imageGreen, imageBlue);
 		//converts the width into a distance between the robot and the camera
 		if (width) {
-			//distance_cm = PXTOCM/width; //il faut changer ça car on utilise pas cette distance !!!
-			distance_cm = GOAL_DISTANCE; //j'ai mis une valeur pour les tests
+			distance_cm = PXTOCM/width; //il faut changer ça car on utilise pas cette distance !!!
+			//distance_cm = GOAL_DISTANCE; //j'ai mis une valeur pour les tests
+		}
+		else
+		{
+			distance_cm = GOAL_DISTANCE;
 		}
 
 		if (send_to_computer) {
