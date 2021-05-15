@@ -107,13 +107,24 @@ static THD_FUNCTION(PiRegulator, arg) {
 				speed = pi_regulator_distance(get_distance_cm(), GOAL_DISTANCE);
 				right_motor_set_speed(speed); //right_motor_set_speed(speed - ROTATION_COEFF * speed_correction);
 				left_motor_set_speed(speed); //left_motor_set_speed(speed + ROTATION_COEFF * speed_correction);
+				if(speed == 0)
+					etat = TURNAROUND;
 				break;
 
 			case TURNAROUND :
-				break;
+	/*			left_motor_set_pos(); //IL FAUT ENTRER LA BONNE VALEUR
+				right_motor_set_pos(); //IL FAUT ENTRER LA BONNE VALEUR
+				if(condition)
+					etat = GOBACK;
+	*/			break;
 
 			case GOBACK :
-				break;
+	/*			speed = pi_regulator_distance(get_distance_cm(), nouveauBUT);
+				right_motor_set_speed(speed);
+				left_motor_set_speed(speed);
+				if(speed == 0)
+					etat = SEARCH;
+	*/			break;
 
         }
 /*
