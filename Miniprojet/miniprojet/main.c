@@ -10,6 +10,7 @@
 #include <main.h>
 #include <motors.h>
 #include <camera/po8030.h>
+#include <sensors/VL53L0X/VL53L0X.h>
 #include <chprintf.h>
 
 #include <pi_regulator.h>
@@ -41,6 +42,7 @@ int main(void)
     chSysInit();
     mpu_init();
 
+
     //starts the serial communication
     serial_start();
     //start the USB communication
@@ -48,6 +50,8 @@ int main(void)
     //starts the camera
     dcmi_start();
 	po8030_start();
+	//starts tof sensor
+	VL53L0X_start();
 	//inits the motors
 	motors_init();
 	//stars the threads for the pi regulator and the processing of the image
