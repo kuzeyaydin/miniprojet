@@ -8,14 +8,10 @@
 
 #include <process_image.h>
 
-enum color {
-	RED, GREEN, BLUE, YELLOW, MAGENTA, CYAN, BLACK, WHITE
-};
-
-enum color target_color=RED;
 static float distance_cm = 0;
 static uint16_t line_position = STARTING_POS, red_line_position = STARTING_POS,
-		green_line_position = STARTING_POS, blue_line_position = STARTING_POS; //0; //IMAGE_BUFFER_SIZE / 2;//middle //0 comme a il tourne tant qu'il n'a pas trouver de ligne
+		green_line_position = STARTING_POS, blue_line_position = STARTING_POS,
+		temp_line_position = STARTING_POS; //0; //IMAGE_BUFFER_SIZE / 2;//middle //0 comme a il tourne tant qu'il n'a pas trouver de ligne
 
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
@@ -38,7 +34,7 @@ uint16_t extract_line_width(uint8_t *buffer, uint8_t tolerance) {
 	}
 
 	mean /= IMAGE_BUFFER_SIZE;
-	meanBlue = (meanBlue / IMAGE_BUFFER_SIZE) - tolerance;
+	mean -= tolerance;
 
 	do {
 		wrong_line = 0;
@@ -82,10 +78,10 @@ uint16_t extract_line_width(uint8_t *buffer, uint8_t tolerance) {
 		end = 0;
 		//width = last_width;
 		width = 0;
-		line_position = STARTING_POS; //0;//IMAGE_BUFFER_SIZE / 2;
+		temp_line_position = STARTING_POS; //0;//IMAGE_BUFFER_SIZE / 2;
 	} else {
 		last_width = width = (end - begin);
-		line_position = (begin + end) / 2; //gives the line position.
+		temp_line_position = (begin + end) / 2; //gives the line position.
 	}
 
 	return width;
@@ -104,7 +100,7 @@ static THD_FUNCTION(CaptureImage, arg) {
 	(void) arg;
 
 	//Takes pixels 0 to IMAGE_BUFFER_SIZE of the line 10 + 11 (minimum 2 lines because reasons)
-	po8030_advanced_config(FORMAT_RGB565, 0, 10, IMAGE_BUFFER_SIZE, 2,
+	po8030_advanced_config(FORMAT_RGB565, 0, 100, IMAGE_BUFFER_SIZE, 2,
 			SUBSAMPLING_X1, SUBSAMPLING_X1);
 	dcmi_enable_double_buffering();
 	dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
@@ -160,24 +156,25 @@ static THD_FUNCTION(ProcessImage, arg) {
 
 		//search for a line in the image and gets its width in pixels
 		redWidth = extract_line_width(imageRed, RED_THRESHOLD);
-		red_line_position = line_position;
+		red_line_position = temp_line_position;
 		greenWidth = extract_line_width(imageGreen, GREEN_THRESHOLD);
-		green_line_position = line_position;
+		green_line_position = temp_line_position;
 		blueWidth = extract_line_width(imageBlue, BLUE_THRESHOLD);
-		blue_line_position = line_position;
+		blue_line_position = temp_line_position;
 		//converts the width into a distance between the robot and the camera
-		if (getLineColor(redWidth, greenWidth, blueWidth)==target_color) {
-			distance_cm = PXTOCM / width; //il faut changer a car on utilise pas cette distance !!!
+		if (getLineColor(redWidth, greenWidth, blueWidth) == TARGET_COLOR) {
+			line_position = temp_line_position;
+			distance_cm = 0;//PXTOCM / redWidth; //il faut changer a car on utilise pas cette distance !!!
 			//distance_cm = GOAL_DISTANCE; //j'ai mis une valeur pour les tests
 		} else {
-			line_position=STARTING_POS;
+			line_position = STARTING_POS;
 			distance_cm = GOAL_DISTANCE;
 		}
 
 		if (send_to_computer) {
 
 			//sends to the computer the image
-			SendUint8ToComputer(imageRed, IMAGE_BUFFER_SIZE);
+			SendUint8ToComputer(imageBlue, IMAGE_BUFFER_SIZE);
 		}
 		//invert the bool
 		send_to_computer = !send_to_computer;
@@ -200,7 +197,7 @@ enum color getLineColor(uint16_t redWidth, uint16_t greenWidth,
 			&& abs(green_line_position - blue_line_position) < SAME_LINE_POS
 			&& (abs(red_line_position - green_line_position) > SAME_LINE_POS
 					|| !redWidth)) {
-		line_position=green_line_position;
+		temp_line_position = green_line_position;
 		return RED;
 	}
 
@@ -209,7 +206,7 @@ enum color getLineColor(uint16_t redWidth, uint16_t greenWidth,
 			&& abs(red_line_position - blue_line_position) < SAME_LINE_POS
 			&& (abs(red_line_position - green_line_position) > SAME_LINE_POS
 					|| !greenWidth)) {
-		line_position=red_line_position;
+		temp_line_position = red_line_position;
 		return GREEN;
 	}
 
@@ -218,7 +215,7 @@ enum color getLineColor(uint16_t redWidth, uint16_t greenWidth,
 			&& abs(green_line_position - red_line_position) < SAME_LINE_POS
 			&& (abs(red_line_position - blue_line_position) > SAME_LINE_POS
 					|| !blueWidth)) {
-		line_position=red_line_position;
+		temp_line_position = red_line_position;
 		return BLUE;
 	}
 
@@ -228,7 +225,7 @@ enum color getLineColor(uint16_t redWidth, uint16_t greenWidth,
 					|| !greenWidth)
 			&& (blue_line_position < red_line_position - SAME_LINE_POS
 					|| !redWidth)) {
-		line_position=blue_line_position;
+		temp_line_position = blue_line_position;
 		return YELLOW;
 	}
 
@@ -237,7 +234,7 @@ enum color getLineColor(uint16_t redWidth, uint16_t greenWidth,
 					|| !blueWidth)
 			&& (green_line_position < red_line_position - SAME_LINE_POS
 					|| !redWidth)) {
-		line_position=green_line_position;
+		temp_line_position = green_line_position;
 		return MAGENTA;
 	}
 
@@ -246,18 +243,18 @@ enum color getLineColor(uint16_t redWidth, uint16_t greenWidth,
 					|| !blueWidth)
 			&& (red_line_position < green_line_position - SAME_LINE_POS
 					|| !greenWidth)) {
-		line_position=red_line_position;
+		temp_line_position = red_line_position;
 		return CYAN;
 	}
 
 	if ((greenWidth && blueWidth && redWidth)
 			&& abs(green_line_position - blue_line_position) < SAME_LINE_POS
 			&& abs(red_line_position - green_line_position) < SAME_LINE_POS) {
-		line_position=red_line_position;
+		temp_line_position = red_line_position;
 		return BLACK;
 	}
 
-	line_position=STARTING_POS;
+	temp_line_position = STARTING_POS;
 
 	return WHITE;
 

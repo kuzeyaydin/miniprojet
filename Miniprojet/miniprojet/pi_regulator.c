@@ -36,7 +36,7 @@ int16_t pi_regulator_rotation(float distance, float goal){
 		sum_error_rot = -MAX_SUM_ERROR;
 	}
 
-	speed = KP * error + KI * sum_error_rot;
+	speed = KP * error;// + KI * sum_error_rot;
 
     return (int16_t)speed;
 }
