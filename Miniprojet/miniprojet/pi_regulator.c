@@ -104,7 +104,7 @@ static THD_FUNCTION(PiRegulator, arg) {
 				break;
 
 			case CHARGE :
-				speed = pi_regulator_distance(get_distance_cm(), GOAL_DISTANCE);
+				speed = pi_regulator_distance(VL53L0X_get_dist_mm(), GOAL_DISTANCE);
 				right_motor_set_speed(speed); //right_motor_set_speed(speed - ROTATION_COEFF * speed_correction);
 				left_motor_set_speed(speed); //left_motor_set_speed(speed + ROTATION_COEFF * speed_correction);
 				break;

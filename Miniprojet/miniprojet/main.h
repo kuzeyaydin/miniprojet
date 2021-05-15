@@ -22,10 +22,12 @@ extern "C" {
 
 #define STARTING_POS			0 //pour ne pas bouger
 
+#define ARENA_RADIUS			350.0f //millimeter
+
 #define ROTATION_THRESHOLD		10
 #define ROTATION_COEFF			0.5  //2
 #define PXTOCM					1570.0f //experimental value
-#define GOAL_DISTANCE 			0.1f
+#define GOAL_DISTANCE 			5.0f //millimeter
 #define MAX_DISTANCE 			25.0f
 #define ERROR_THRESHOLD_ROT		5 		//[px] a cause du bruit de la camera
 #define ERROR_THRESHOLD_DIST	0.5f	//[cm] because of the noise of the camera
