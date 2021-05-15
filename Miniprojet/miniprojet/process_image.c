@@ -140,18 +140,18 @@ static THD_FUNCTION(ProcessImage, arg) {
 		for (uint16_t i = 0; i < (2 * IMAGE_BUFFER_SIZE); i += 2) {
 			//extracts first 5bits of the first byte
 			//takes nothing from the second byte
-			imageRed[i / 2] = (uint8_t) img_buff_ptr[i] & 0xF8;
+			imageRed[i / 2] = (uint8_t) ((img_buff_ptr[i] & 0xF8));
 		}
 
 		//extract only the blue pixels
 		for (uint16_t i = 0; i < (2 * IMAGE_BUFFER_SIZE); i += 2) {
-			imageBlue[i / 2] = (uint8_t) img_buff_ptr[i + 1] & 0x1F;
+			imageBlue[i / 2] = (uint8_t) ((img_buff_ptr[i + 1] & 0x1F)<<3);
 		}
 
 		//extract only the Green pixels
 		for (uint16_t i = 0; i < (2 * IMAGE_BUFFER_SIZE); i += 2) {
-			imageGreen[i / 2] = ((uint8_t) img_buff_ptr[i] & 0x07) * 8;	// *8 car bit shift ne fonctionne pas
-			imageGreen[i / 2] += ((uint8_t) img_buff_ptr[i + 1] & 0xE0) / 32;
+			imageGreen[i / 2] = (uint8_t) ((img_buff_ptr[i] & 0x07)<<5);	// *8 car bit shift ne fonctionne pas
+			imageGreen[i / 2] += (uint8_t) ((img_buff_ptr[i + 1] & 0xE0)>>3);
 		}
 
 		//search for a line in the image and gets its width in pixels

@@ -17,7 +17,7 @@ extern "C" {
 
 #define RED_THRESHOLD			32 //le rouge est stocké a gauche on multiplie donc le threshold de base (qui est 2) par 8=16
 #define GREEN_THRESHOLD			10
-#define BLUE_THRESHOLD			3
+#define BLUE_THRESHOLD			2
 #define SAME_LINE_POS 			IMAGE_BUFFER_SIZE*0.05
 
 #define STARTING_POS			0 //pour ne pas bouger
