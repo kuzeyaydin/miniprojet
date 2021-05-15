@@ -1,7 +1,7 @@
 #ifndef PI_REGULATOR_H
 #define PI_REGULATOR_H
 
-enum STATE {
+enum ETAT {
 	SEARCH, CHARGE, TURNAROUND, GOBACK
 };
 

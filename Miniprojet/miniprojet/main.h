@@ -32,11 +32,10 @@ extern "C" {
 #define ERROR_THRESHOLD_ROT		5 		//[px] a cause du bruit de la camera
 #define ERROR_THRESHOLD_DIST	0.5f	//[cm] because of the noise of the camera
 #define KP						1.2f
-#define KI 						0.3f	//must not be zero //3.5f Initially
-#define KP_D					50.0f
-#define KI_D					0.05f
-#define MAX_SUM_ERROR_ROT 		(MOTOR_SPEED_LIMIT/KI)
-#define MAX_SUM_ERROR_DIST		(MOTOR_SPEED_LIMIT/KI_D)
+#define KI 						0.1f	//must not be zero //3.5f Initially
+#define KP_D					500.0f
+#define KI_D					1.0f
+#define MAX_SUM_ERROR 			(MOTOR_SPEED_LIMIT/KI)
 
 /** Robot wide IPC bus. */
 extern messagebus_t bus;
