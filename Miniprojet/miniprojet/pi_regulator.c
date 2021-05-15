@@ -14,7 +14,7 @@
 uint16_t speedCorrection = 0;
 uint16_t speedDist = 0;
 
-enum ETAT etat = SEARCH;
+enum STATE state = SEARCH;
 
 //simple PI regulator implementation
 int16_t pi_regulator_rotation(float distance, float goal){
@@ -91,7 +91,7 @@ static THD_FUNCTION(PiRegulator, arg) {
     while(1){
         time = chVTGetSystemTime();
         
-        switch (etat){
+        switch (state){
 			case SEARCH :
 				speed_correction = pi_regulator_rotation(get_line_position(),(IMAGE_BUFFER_SIZE/2));
 				//if the line is nearly in front of the camera, don't rotate
@@ -101,7 +101,7 @@ static THD_FUNCTION(PiRegulator, arg) {
 				right_motor_set_speed(0 - ROTATION_COEFF*speed_correction); //right_motor_set_speed(speed - ROTATION_COEFF * speed_correction);
 				left_motor_set_speed(0 + ROTATION_COEFF*speed_correction); //left_motor_set_speed(speed + ROTATION_COEFF * speed_correction);
 				if(speed_correction == 0)
-					etat = CHARGE;
+					state = CHARGE;
 				break;
 
 			case CHARGE :
@@ -109,14 +109,14 @@ static THD_FUNCTION(PiRegulator, arg) {
 				right_motor_set_speed(speed); //right_motor_set_speed(speed - ROTATION_COEFF * speed_correction);
 				left_motor_set_speed(speed); //left_motor_set_speed(speed + ROTATION_COEFF * speed_correction);
 				if(speed == 0)
-					etat = TURNAROUND;
+					state = TURNAROUND;
 				break;
 
 			case TURNAROUND :
 	/*			left_motor_set_pos(); //IL FAUT ENTRER LA BONNE VALEUR
 				right_motor_set_pos(); //IL FAUT ENTRER LA BONNE VALEUR
 				if(condition)
-					etat = GOBACK;
+					state = GOBACK;
 	*/			break;
 
 			case GOBACK :
@@ -124,7 +124,7 @@ static THD_FUNCTION(PiRegulator, arg) {
 				right_motor_set_speed(speed);
 				left_motor_set_speed(speed);
 				if(speed == 0)
-					etat = SEARCH;
+					state = SEARCH;
 	*/			break;
 
         }
