@@ -113,7 +113,6 @@ static THD_FUNCTION(CaptureImage, arg) {
 		wait_image_ready();
 		//signals an image has been captured
 		chBSemSignal(&image_ready_sem);
-
 	}
 }
 
@@ -164,14 +163,14 @@ static THD_FUNCTION(ProcessImage, arg) {
 		//converts the width into a distance between the robot and the camera
 		if (getLineColor(redWidth, greenWidth, blueWidth) == TARGET_COLOR) {
 			line_position = temp_line_position;
-			distance_cm = 0;
+			distance_cm = GOAL_DISTANCE+10;
 			isLineFound = TRUE;
 
 			//PXTOCM / redWidth; //il faut changer a car on utilise pas cette distance !!!
 			//distance_cm = GOAL_DISTANCE; //j'ai mis une valeur pour les tests
 		} else {
 			line_position = STARTING_POS;
-			distance_cm = GOAL_DISTANCE;
+			distance_cm = GOAL_DISTANCE+10;
 			isLineFound = FALSE;
 		}
 
