@@ -33,17 +33,23 @@ int16_t pi_regulator_rotation(float distance, float goal){
 		return 0;
 	}
 
-	sum_error_rot += error;
-
-	//we set a maximum and a minimum for the sum to avoid an uncontrolled growth
-	if(sum_error_rot > MAX_SUM_ERROR){
-		sum_error_rot = MAX_SUM_ERROR;
-	}else if(sum_error_rot < -MAX_SUM_ERROR){
-		sum_error_rot = -MAX_SUM_ERROR;
+	if(state == SEARCH)
+	{
+		//sum_error_rot += 0;
+		speed = KP * error;// + KI * sum_error_rot;
 	}
+	else if(state == CHARGE)
+	{
+		sum_error_rot += error;
 
-	speed = KP * error + KI * sum_error_rot;
-
+		//we set a maximum and a minimum for the sum to avoid an uncontrolled growth
+		if(sum_error_rot > MAX_SUM_ERROR_ROT){
+			sum_error_rot = MAX_SUM_ERROR_ROT;
+		}else if(sum_error_rot < -MAX_SUM_ERROR_ROT){
+			sum_error_rot = -MAX_SUM_ERROR_ROT;
+		}
+		speed = KP * error + KI * sum_error_rot;
+	}
     return (int16_t)speed;
 }
 
@@ -66,10 +72,10 @@ int16_t pi_regulator_distance(float distance, float goal){
 	sum_error_dist += error;
 
 	//we set a maximum and a minimum for the sum to avoid an uncontrolled growth
-	if(sum_error_dist > MAX_SUM_ERROR){
-		sum_error_dist = MAX_SUM_ERROR;
-	}else if(sum_error_dist < -MAX_SUM_ERROR){
-		sum_error_dist = -MAX_SUM_ERROR;
+	if(sum_error_dist > MAX_SUM_ERROR_DIST){
+		sum_error_dist = MAX_SUM_ERROR_DIST;
+	}else if(sum_error_dist < -MAX_SUM_ERROR_DIST){
+		sum_error_dist = -MAX_SUM_ERROR_DIST;
 	}
 
 	speed = KP_D * error + KI_D * sum_error_dist;
@@ -106,10 +112,18 @@ static THD_FUNCTION(PiRegulator, arg) {
 
 			case CHARGE :
 				speed = pi_regulator_distance(VL53L0X_get_dist_mm()/10, GOAL_DISTANCE);
-				right_motor_set_speed(speed); //right_motor_set_speed(speed - ROTATION_COEFF * speed_correction);
-				left_motor_set_speed(speed); //left_motor_set_speed(speed + ROTATION_COEFF * speed_correction);
-				if(speed == 0)
-					state = TURNAROUND;
+				speed_correction = pi_regulator_rotation(get_line_position(),(IMAGE_BUFFER_SIZE/2));
+				if(abs(speed_correction) < ROTATION_THRESHOLD){
+					speed_correction = 0;
+				}
+
+
+				//right_motor_set_speed(speed); //right_motor_set_speed(speed - ROTATION_COEFF * speed_correction);
+				//left_motor_set_speed(speed); //left_motor_set_speed(speed + ROTATION_COEFF * speed_correction);
+				right_motor_set_speed(speed - ROTATION_COEFF*speed_correction); //right_motor_set_speed(speed - ROTATION_COEFF * speed_correction);
+				left_motor_set_speed(speed + ROTATION_COEFF*speed_correction); //left_motor_set_speed(speed + ROTATION_COEFF * speed_correction);
+				/*if(speed == 0)
+					state = TURNAROUND;*/
 				break;
 
 			case TURNAROUND :
@@ -126,6 +140,10 @@ static THD_FUNCTION(PiRegulator, arg) {
 				if(speed == 0)
 					state = SEARCH;
 	*/			break;
+			default :
+				right_motor_set_speed(0); //right_motor_set_speed(speed - ROTATION_COEFF * speed_correction);
+				left_motor_set_speed(0); //left_motor_set_speed(speed + ROTATION_COEFF * speed_correction);
+				break;
 
         }
 /*
@@ -148,7 +166,7 @@ static THD_FUNCTION(PiRegulator, arg) {
 		left_motor_set_speed(speed + ROTATION_COEFF*speed_correction); //left_motor_set_speed(speed + ROTATION_COEFF * speed_correction);
 */
 		//100Hz
-		chThdSleepUntilWindowed(time, time + MS2ST(10));
+		chThdSleepUntilWindowed(time, time + MS2ST(5));
 
     }
 }
