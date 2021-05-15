@@ -7,6 +7,7 @@
 
 #include <main.h>
 #include <motors.h>
+#include <sensors/VL53L0X/VL53L0X.h>
 #include <pi_regulator.h>
 #include <process_image.h>
 
@@ -41,7 +42,7 @@ int16_t pi_regulator_rotation(float distance, float goal){
 		sum_error_rot = -MAX_SUM_ERROR;
 	}
 
-	speed = KP * error;// + KI * sum_error_rot;
+	speed = KP * error + KI * sum_error_rot;
 
     return (int16_t)speed;
 }
@@ -104,7 +105,7 @@ static THD_FUNCTION(PiRegulator, arg) {
 				break;
 
 			case CHARGE :
-				speed = pi_regulator_distance(get_distance_cm(), GOAL_DISTANCE);
+				speed = pi_regulator_distance(VL53L0X_get_dist_mm()/10, GOAL_DISTANCE);
 				right_motor_set_speed(speed); //right_motor_set_speed(speed - ROTATION_COEFF * speed_correction);
 				left_motor_set_speed(speed); //left_motor_set_speed(speed + ROTATION_COEFF * speed_correction);
 				if(speed == 0)
