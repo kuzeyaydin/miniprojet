@@ -12,7 +12,7 @@ static float distance_cm = 0;
 static uint16_t line_position = STARTING_POS, red_line_position = STARTING_POS,
 		green_line_position = STARTING_POS, blue_line_position = STARTING_POS,
 		temp_line_position = STARTING_POS; //0; //IMAGE_BUFFER_SIZE / 2;//middle //0 comme a il tourne tant qu'il n'a pas trouver de ligne
-
+_Bool isLineFound = FALSE;
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
 
@@ -93,7 +93,7 @@ static THD_FUNCTION(CaptureImage, arg) {
 	/*systime_t time;
 	 time = chVTGetSystemTime();
 	 //-> Functions to measure <-//
-	 chprintf((BaseSequentialStream *)&SDU1, "captureimeâ=£%d\n", chVTGetSystemTime()-time);
+	 chprintf((BaseSequentialStream *)&SDU1, "captureimeï¿½=ï¿½%d\n", chVTGetSystemTime()-time);
 	 */
 
 	chRegSetThreadName(__FUNCTION__);
@@ -164,11 +164,15 @@ static THD_FUNCTION(ProcessImage, arg) {
 		//converts the width into a distance between the robot and the camera
 		if (getLineColor(redWidth, greenWidth, blueWidth) == TARGET_COLOR) {
 			line_position = temp_line_position;
-			distance_cm = 0;//PXTOCM / redWidth; //il faut changer a car on utilise pas cette distance !!!
+			distance_cm = 0;
+			isLineFound = TRUE;
+
+			//PXTOCM / redWidth; //il faut changer a car on utilise pas cette distance !!!
 			//distance_cm = GOAL_DISTANCE; //j'ai mis une valeur pour les tests
 		} else {
 			line_position = STARTING_POS;
 			distance_cm = GOAL_DISTANCE;
+			isLineFound = FALSE;
 		}
 
 		if (send_to_computer) {
@@ -187,6 +191,10 @@ float get_distance_cm(void) {
 
 uint16_t get_line_position(void) {
 	return line_position;
+}
+_Bool getLineFound(void)
+{
+	return isLineFound;
 }
 
 enum color getLineColor(uint16_t redWidth, uint16_t greenWidth,

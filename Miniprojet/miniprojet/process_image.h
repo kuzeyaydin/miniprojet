@@ -14,5 +14,6 @@ enum color getLineColor(uint16_t redWidth, uint16_t greenWidth,
 float get_distance_cm(void);
 uint16_t get_line_position(void);
 void process_image_start(void);
+_Bool getLineFound(void);
 
 #endif /* PROCESS_IMAGE_H */

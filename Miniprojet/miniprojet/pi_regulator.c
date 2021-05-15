@@ -87,22 +87,33 @@ static THD_FUNCTION(PiRegulator, arg) {
         
         //computes the speed to give to the motors
         //distance_cm is modified by the image processing thread
-        //speed = pi_regulator_distance(get_distance_cm(), GOAL_DISTANCE);
+        speed = pi_regulator_distance(get_distance_cm(), GOAL_DISTANCE);
+
         //computes a correction factor to let the robot rotate to be in front of the line
         //speed_correction = (get_line_position() - (IMAGE_BUFFER_SIZE/2)); //on utilise pas de pi pour la rotation ??
         speed_correction = pi_regulator_rotation(get_line_position(),(IMAGE_BUFFER_SIZE/2));
 
-        //if the line is nearly in front of the camera, don't rotate
-        if(abs(speed_correction) < ROTATION_THRESHOLD){
-        	speed_correction = 0;
+        if(speed_correction >= 0||speed_correction <= 30)
+        {
+        	//chThdSleepUntilWindowed(time, time + MS2ST(100));
+        	while(getLineFound())
+        	{
+        		right_motor_set_speed(MOTOR_SPEED_LIMIT/4);
+        		left_motor_set_speed(MOTOR_SPEED_LIMIT/4);
+        	}
         }
-
-        //applies the speed from the PI regulator and the correction for the rotation
-		right_motor_set_speed(speed - ROTATION_COEFF * speed_correction);
-		left_motor_set_speed(speed + ROTATION_COEFF * speed_correction);
-
-        //100Hz
-        chThdSleepUntilWindowed(time, time + MS2ST(10));
+        else
+        {
+        	//if the line is nearly in front of the camera, don't rotate
+			if(abs(speed_correction) < ROTATION_THRESHOLD){
+				speed_correction = 0;
+			}
+			//applies the speed from the PI regulator and the correction for the rotation
+			right_motor_set_speed(0 - ROTATION_COEFF*speed_correction); //right_motor_set_speed(speed - ROTATION_COEFF * speed_correction);
+			left_motor_set_speed(0 + ROTATION_COEFF*speed_correction); //left_motor_set_speed(speed + ROTATION_COEFF * speed_correction);
+			//100Hz
+			chThdSleepUntilWindowed(time, time + MS2ST(10));
+        }
     }
 }
 
