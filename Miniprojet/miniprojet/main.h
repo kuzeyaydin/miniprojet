@@ -27,15 +27,23 @@ extern "C" {
 #define ROTATION_THRESHOLD		10
 #define ROTATION_COEFF			0.5  //2
 #define PXTOCM					1570.0f //experimental value
-#define GOAL_DISTANCE 			5.0f //centimeter
+#define GOAL_DISTANCE 			10.0f //centimeter
 #define MAX_DISTANCE 			25.0f
-#define ERROR_THRESHOLD_ROT		5 		//[px] a cause du bruit de la camera
-#define ERROR_THRESHOLD_DIST	0.5f	//[cm] because of the noise of the camera
-#define KP						1.2f
-#define KI 						0.1f	//must not be zero //3.5f Initially
-#define KP_D					500.0f
-#define KI_D					1.0f
-#define MAX_SUM_ERROR 			(MOTOR_SPEED_LIMIT/KI)
+#define ERROR_THRESHOLD	0.01f	//percent
+#define KP_SEARCH				1.6f
+#define KP_TARGET				5*KP_SEARCH
+#define KI_TARGET				2.0f
+#define KD_TARGET				KI_TARGET/4 //Ziegler-Nichols tuning methods usually have kd=ki/4
+#define KP_CHARGE				500.0f
+#define KI_CHARGE				1.0f
+#define KD_CHARGE				KI_CHARGE/4
+#define KP_GOBACK				KP_CHARGE
+#define KI_GOBACK				KI_CHARGE
+#define KD_GOBACK				KD_CHARGE
+#define DANCE_SPEED				MOTOR_SPEED_LIMIT/3
+#define DANCE_TIME				1800 //experimental value, ms
+#define WAITTIMEPID				10 // millisecond
+#define MAX_SUM_ERROR 			(MOTOR_SPEED_LIMIT/KI_CHARGE)
 
 /** Robot wide IPC bus. */
 extern messagebus_t bus;

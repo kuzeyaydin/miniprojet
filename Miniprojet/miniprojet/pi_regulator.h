@@ -1,8 +1,8 @@
 #ifndef PI_REGULATOR_H
 #define PI_REGULATOR_H
 
-enum ETAT {
-	SEARCH, CHARGE, TURNAROUND, GOBACK
+enum STATE {
+	SEARCH, TARGETACQUISITION, CHARGE, TURNAROUND, GOBACK
 };
 
 //start the PI regulator thread
