@@ -12,9 +12,12 @@
 #include <camera/po8030.h>
 #include <sensors/VL53L0X/VL53L0X.h>
 #include <chprintf.h>
-
-#include <pi_regulator.h>
+#include <spi_comm.h>
 #include <process_image.h>
+#include <pid_regulator.h>
+#include <leds.h>
+
+void toggle_color_leds(void);
 
 void SendUint8ToComputer(uint8_t* data, uint16_t size) 
 {
@@ -45,6 +48,8 @@ int main(void)
 
     //starts the serial communication
     serial_start();
+    //starts spi communication
+    spi_comm_start();
     //start the USB communication
     usb_start();
     //starts the camera
@@ -54,16 +59,63 @@ int main(void)
 	VL53L0X_start();
 	//inits the motors
 	motors_init();
-	//stars the threads for the pi regulator and the processing of the image
 
-	pi_regulator_start();
+	//stars the threads for the pi regulator and the processing of the image
+	pid_regulator_start();
 	process_image_start();
 
     /* Infinite loop. */
     while (1) {
-    	//waits 1 second
-        chThdSleepMilliseconds(1000);
+		toggle_color_leds();
+    	//waits 10 msecond
+        chThdSleepMilliseconds(10);
     }
+}
+
+void toggle_color_leds(void) {
+	switch(target_color()) {
+	case RED:
+		set_rgb_led(LED2, RGB_MAX_INTENSITY/2, 0, 0);
+		set_rgb_led(LED4, RGB_MAX_INTENSITY/2/2, 0, 0);
+		set_rgb_led(LED6, RGB_MAX_INTENSITY/2, 0, 0);
+		set_rgb_led(LED8, RGB_MAX_INTENSITY/2, 0, 0);
+		break;
+	case GREEN:
+		set_rgb_led(LED2, 0, RGB_MAX_INTENSITY/2, 0);
+		set_rgb_led(LED4, 0, RGB_MAX_INTENSITY/2, 0);
+		set_rgb_led(LED6, 0, RGB_MAX_INTENSITY/2, 0);
+		set_rgb_led(LED8, 0, RGB_MAX_INTENSITY/2, 0);
+		break;
+	case BLUE:
+		set_rgb_led(LED2, 0, 0, RGB_MAX_INTENSITY/2);
+		set_rgb_led(LED4, 0, 0, RGB_MAX_INTENSITY/2);
+		set_rgb_led(LED6, 0, 0, RGB_MAX_INTENSITY/2);
+		set_rgb_led(LED8, 0, 0, RGB_MAX_INTENSITY/2);
+		break;
+	case YELLOW:
+		set_rgb_led(LED2, RGB_MAX_INTENSITY/2, RGB_MAX_INTENSITY/2, 0);
+		set_rgb_led(LED4, RGB_MAX_INTENSITY/2, RGB_MAX_INTENSITY/2, 0);
+		set_rgb_led(LED6, RGB_MAX_INTENSITY/2, RGB_MAX_INTENSITY/2, 0);
+		set_rgb_led(LED8, RGB_MAX_INTENSITY/2, RGB_MAX_INTENSITY/2, 0);
+		break;
+	case MAGENTA:
+		set_rgb_led(LED2, RGB_MAX_INTENSITY/2, 0, RGB_MAX_INTENSITY/2);
+		set_rgb_led(LED4, RGB_MAX_INTENSITY/2, 0, RGB_MAX_INTENSITY/2);
+		set_rgb_led(LED6, RGB_MAX_INTENSITY/2, 0, RGB_MAX_INTENSITY/2);
+		set_rgb_led(LED8, RGB_MAX_INTENSITY/2, 0, RGB_MAX_INTENSITY/2);
+		break;
+	case CYAN:
+		set_rgb_led(LED2, 0, RGB_MAX_INTENSITY/2, RGB_MAX_INTENSITY/2);
+		set_rgb_led(LED4, 0, RGB_MAX_INTENSITY/2, RGB_MAX_INTENSITY/2);
+		set_rgb_led(LED6, 0, RGB_MAX_INTENSITY/2, RGB_MAX_INTENSITY/2);
+		set_rgb_led(LED8, 0, RGB_MAX_INTENSITY/2, RGB_MAX_INTENSITY/2);
+		break;
+	default:
+		set_rgb_led(LED2, 0, 0, 0);
+		set_rgb_led(LED4, 0, 0, 0);
+		set_rgb_led(LED6, 0, 0, 0);
+		set_rgb_led(LED8, 0, 0, 0);
+	}
 }
 
 #define STACK_CHK_GUARD 0xe2dee396
