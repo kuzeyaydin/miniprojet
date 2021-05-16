@@ -5,9 +5,12 @@
 #include <sensors/VL53L0X/VL53L0X.h>
 #include <process_image.h>
 #include <colors.h>
-#include <leds.h>
 
-_Bool changestate = 0;
+enum STATE {
+	SEARCH, TARGET, CHARGE, TURNAROUND, GOBACK
+};
+
+static _Bool changestate = 0;
 
 //robots starts searching after bootup
 enum STATE state = SEARCH;
@@ -91,13 +94,11 @@ static THD_FUNCTION(PidRegulator, arg) {
 			break;
 
 		case TURNAROUND:
-			set_body_led(1);
 			left_motor_set_speed(DANCE_SPEED);
 			right_motor_set_speed(-DANCE_SPEED);
 			chThdSleepMilliseconds(DANCE_TIME);	//robot turns for the given amount of time
 
 			state = GOBACK;
-			set_body_led(0);
 			changestate = 1;
 
 			break;
@@ -118,11 +119,11 @@ static THD_FUNCTION(PidRegulator, arg) {
 			break;
 
 		default:
+			//not necessary but just in case
 			right_motor_set_speed(0);
 			left_motor_set_speed(0);
 		}
 
-		//100Hz
 		chThdSleepUntilWindowed(time, time + MS2ST(WAIT_TIME_PID));
 
 	}
