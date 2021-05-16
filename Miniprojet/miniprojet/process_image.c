@@ -89,11 +89,13 @@ static THD_FUNCTION(ProcessImage, arg) {
 			line_position = STARTING_POS;
 		}
 
+		//for testing purposes only
 		if (send_to_computer) {
 
 			//sends to the computer the image
-			//SendUint8ToComputer(imageBlue, IMAGE_BUFFER_SIZE);
+			SendUint8ToComputer(imageBlue, IMAGE_BUFFER_SIZE);
 		}
+
 		//invert the bool
 		send_to_computer = !send_to_computer;
 	}
@@ -178,10 +180,11 @@ uint16_t get_line_position(void) {
 }
 
 /*
- * 1) for main colors, lines 2 other main colors has to match, and either there's no line in that main color
+ * 1) for main colors, lines for 2 other main colors has to match, and either there's no line in that main color
  * or the line in that color is different from the 2 others
- * 2) for mix of 2 main colors, there's a line in the other color, and for the mixed colors there's either
- * no line for them or their lines are in a different place compared to the color that's not part of the mix
+ * 2) for mix of 2 main colors, there's a line in the third color, and for the first two colors there's either
+ * no line for them or their lines are in a different place compared to the third color
+ * the difference is made as a smaller sign instead of absolute value to make the robot process the lines from left to right
  * 3) for black, lines for all 3 colors has to be the same
  * 4) if nothing is found, white is returned and robot keeps searching
 */

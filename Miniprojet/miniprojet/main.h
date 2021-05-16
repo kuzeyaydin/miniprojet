@@ -12,17 +12,17 @@ extern "C" {
 //constants for the differents parts of the project
 #define CAPTURED_LINE			100 //this line from camera will be used for image treatment
 #define IMAGE_BUFFER_SIZE		640	//image length, image will be 1xIMAGE_BUFFER_SIZE
-#define WIDTH_SLOPE				5	//accounting for noise with a...
+#define WIDTH_SLOPE				5	//accounting for noise for a...
 #define MIN_LINE_WIDTH			40	//...color line on a white background
 #define AUTO_WHITE_BALANCE		0 	//0 for off, 1 for on
-
+//targetable colors
 enum color {
 	RED, GREEN, BLUE, YELLOW, MAGENTA, CYAN, BLACK, WHITE
 };
 
 //adding tolerances to account for different ambient lights
 //8*actual tolerance for r&b and 4*actual tolerance for green
-//since all values are bitshifted to left for easier testing
+//all values are bitshifted to left for easier testing
 #define RED_TOLERANCE			32
 #define GREEN_TOLERANCE			8
 #define BLUE_TOLERANCE			32
@@ -57,7 +57,9 @@ enum color {
 #define KD_GOBACK				KD_CHARGE
 #define MAX_SUM_ERROR 			(MOTOR_SPEED_LIMIT/KI_TARGET) //set denominator to biggest Ki
 #define MAX_DIFF_ERROR			(MOTOR_SPEED_LIMIT/KD_TARGET) //set denominator to biggest Kd
-#define WAIT_TIME_PID			5 //time between each pid regulation, millisecond
+#define WAIT_TIME_PID			5 //time between each pid regulation, ms
+
+#define WAIT_AFTER_TARGET		500 //ms
 
 #define DANCE_SPEED				MOTOR_SPEED_LIMIT/3
 #define DANCE_TIME				1800 //experimental value, ms

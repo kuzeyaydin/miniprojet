@@ -17,8 +17,6 @@
 #include <pid_regulator.h>
 #include <leds.h>
 
-void toggle_color_leds(void);
-
 void SendUint8ToComputer(uint8_t* data, uint16_t size) 
 {
 	chSequentialStreamWrite((BaseSequentialStream *)&SD3, (uint8_t*)"START", 5);
@@ -66,56 +64,9 @@ int main(void)
 
     /* Infinite loop. */
     while (1) {
-		toggle_color_leds();
-    	//waits 10 msecond
-        chThdSleepMilliseconds(10);
+    	//waits 1 second
+        chThdSleepMilliseconds(1000);
     }
-}
-
-void toggle_color_leds(void) {
-	switch(target_color()) {
-	case RED:
-		set_rgb_led(LED2, RGB_MAX_INTENSITY/2, 0, 0);
-		set_rgb_led(LED4, RGB_MAX_INTENSITY/2/2, 0, 0);
-		set_rgb_led(LED6, RGB_MAX_INTENSITY/2, 0, 0);
-		set_rgb_led(LED8, RGB_MAX_INTENSITY/2, 0, 0);
-		break;
-	case GREEN:
-		set_rgb_led(LED2, 0, RGB_MAX_INTENSITY/2, 0);
-		set_rgb_led(LED4, 0, RGB_MAX_INTENSITY/2, 0);
-		set_rgb_led(LED6, 0, RGB_MAX_INTENSITY/2, 0);
-		set_rgb_led(LED8, 0, RGB_MAX_INTENSITY/2, 0);
-		break;
-	case BLUE:
-		set_rgb_led(LED2, 0, 0, RGB_MAX_INTENSITY/2);
-		set_rgb_led(LED4, 0, 0, RGB_MAX_INTENSITY/2);
-		set_rgb_led(LED6, 0, 0, RGB_MAX_INTENSITY/2);
-		set_rgb_led(LED8, 0, 0, RGB_MAX_INTENSITY/2);
-		break;
-	case YELLOW:
-		set_rgb_led(LED2, RGB_MAX_INTENSITY/2, RGB_MAX_INTENSITY/2, 0);
-		set_rgb_led(LED4, RGB_MAX_INTENSITY/2, RGB_MAX_INTENSITY/2, 0);
-		set_rgb_led(LED6, RGB_MAX_INTENSITY/2, RGB_MAX_INTENSITY/2, 0);
-		set_rgb_led(LED8, RGB_MAX_INTENSITY/2, RGB_MAX_INTENSITY/2, 0);
-		break;
-	case MAGENTA:
-		set_rgb_led(LED2, RGB_MAX_INTENSITY/2, 0, RGB_MAX_INTENSITY/2);
-		set_rgb_led(LED4, RGB_MAX_INTENSITY/2, 0, RGB_MAX_INTENSITY/2);
-		set_rgb_led(LED6, RGB_MAX_INTENSITY/2, 0, RGB_MAX_INTENSITY/2);
-		set_rgb_led(LED8, RGB_MAX_INTENSITY/2, 0, RGB_MAX_INTENSITY/2);
-		break;
-	case CYAN:
-		set_rgb_led(LED2, 0, RGB_MAX_INTENSITY/2, RGB_MAX_INTENSITY/2);
-		set_rgb_led(LED4, 0, RGB_MAX_INTENSITY/2, RGB_MAX_INTENSITY/2);
-		set_rgb_led(LED6, 0, RGB_MAX_INTENSITY/2, RGB_MAX_INTENSITY/2);
-		set_rgb_led(LED8, 0, RGB_MAX_INTENSITY/2, RGB_MAX_INTENSITY/2);
-		break;
-	default:
-		set_rgb_led(LED2, 0, 0, 0);
-		set_rgb_led(LED4, 0, 0, 0);
-		set_rgb_led(LED6, 0, 0, 0);
-		set_rgb_led(LED8, 0, 0, 0);
-	}
 }
 
 #define STACK_CHK_GUARD 0xe2dee396
