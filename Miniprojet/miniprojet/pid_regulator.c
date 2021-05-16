@@ -13,7 +13,7 @@ enum STATE {
 static _Bool changestate = 0;
 
 //robots starts searching after bootup
-enum STATE state = SEARCH;
+static enum STATE state = SEARCH;
 
 //internal functions
 int16_t pid_regulator(float distance, float goal, float kp, float ki, float kd);
