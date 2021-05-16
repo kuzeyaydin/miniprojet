@@ -9,12 +9,12 @@
 #define RGB565_GREEN_BITMASK_2  0xE0
 #define RGB565_BLUE_BITMASK 	0x1F
 
-static uint16_t line_position = STARTING_POS, red_line_position = STARTING_POS,
-				green_line_position = STARTING_POS, blue_line_position = STARTING_POS,
-				temp_line_position = STARTING_POS;
+static uint16_t line_position = STARTING_POS, temp_line_position = STARTING_POS;
 
 //internal functions
-enum color getLineColor(uint16_t redWidth, uint16_t greenWidth, uint16_t blueWidth);
+enum color getLineColor(uint16_t redWidth, uint16_t greenWidth, uint16_t blueWidth,
+						uint16_t red_line_position, uint16_t blue_line_position,
+						uint16_t green_line_position);
 uint16_t extract_line_width(uint8_t *buffer, uint8_t tolerance);
 
 //semaphore
@@ -56,6 +56,8 @@ static THD_FUNCTION(ProcessImage, arg) {
 	uint8_t imageRed[IMAGE_BUFFER_SIZE] = { 0 }, imageBlue[IMAGE_BUFFER_SIZE] = { 0 },
 			imageGreen[IMAGE_BUFFER_SIZE] = { 0 };
 	uint16_t redWidth = 0, greenWidth = 0, blueWidth = 0;
+	uint16_t red_line_position = STARTING_POS, green_line_position = STARTING_POS,
+			 blue_line_position = STARTING_POS;
 
 	while (1) {
 		//waits until an image has been captured
@@ -82,7 +84,8 @@ static THD_FUNCTION(ProcessImage, arg) {
 		blueWidth = extract_line_width(imageBlue, BLUE_TOLERANCE);
 		blue_line_position = temp_line_position;
 
-		if (getLineColor(redWidth, greenWidth, blueWidth) == target_color()) {
+		if (getLineColor(redWidth, greenWidth, blueWidth, red_line_position, blue_line_position,
+						 green_line_position) == target_color()) {
 			line_position = temp_line_position;
 		} else {
 			line_position = STARTING_POS;
@@ -176,8 +179,10 @@ uint16_t get_line_position(void) {
  * the difference is made as a smaller sign instead of absolute value to make the robot process the lines from left to right
  * 3) for black, lines for all 3 colors has to be the same
  * 4) if nothing is found, white is returned and robot keeps searching
-*/
-enum color getLineColor(uint16_t redWidth, uint16_t greenWidth, uint16_t blueWidth) {
+ */
+enum color getLineColor(uint16_t redWidth, uint16_t greenWidth, uint16_t blueWidth,
+						uint16_t red_line_position, uint16_t blue_line_position,
+						uint16_t green_line_position) {
 
 	if ((greenWidth && blueWidth) && abs(green_line_position - blue_line_position) < SAME_LINE_POS
 		&& (abs(red_line_position - green_line_position) > SAME_LINE_POS || !redWidth)) {
