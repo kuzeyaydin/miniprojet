@@ -15,10 +15,6 @@ extern "C" {
 #define WIDTH_SLOPE				5	//accounting for noise for a...
 #define MIN_LINE_WIDTH			40	//...color line on a white background
 #define AUTO_WHITE_BALANCE		0 	//0 for off, 1 for on
-//targetable colors
-enum color {
-	RED, GREEN, BLUE, YELLOW, MAGENTA, CYAN, BLACK, WHITE
-};
 
 //adding tolerances to account for different ambient lights
 //8*actual tolerance for r&b and 4*actual tolerance for green
@@ -65,11 +61,10 @@ enum color {
 #define DANCE_TIME				1800 //experimental value, ms
 
 /** Robot wide IPC bus. */
+
 extern messagebus_t bus;
 
 extern parameter_namespace_t parameter_root;
-
-void SendUint8ToComputer(uint8_t* data, uint16_t size);
 
 #ifdef __cplusplus
 }

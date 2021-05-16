@@ -1,12 +1,13 @@
-#include "ch.h"
-#include "hal.h"
-#include <chprintf.h>
-#include <usbcfg.h>
-#include <math.h>
+#include <ch.h>
 #include <main.h>
 #include <camera/po8030.h>
 #include <process_image.h>
-#include <selector.h>
+#include <colors.h>
+
+#define RGB565_RED_BITMASK 		0xF8
+#define RGB565_GREEN_BITMASK_1  0x07
+#define RGB565_GREEN_BITMASK_2  0xE0
+#define RGB565_BLUE_BITMASK 	0x1F
 
 static uint16_t line_position = STARTING_POS, red_line_position = STARTING_POS,
 				green_line_position = STARTING_POS, blue_line_position = STARTING_POS,
@@ -27,7 +28,7 @@ static THD_FUNCTION(CaptureImage, arg) {
 
 	//Takes pixels 0 to IMAGE_BUFFER_SIZE of the line 10 + 11 (minimum 2 lines because reasons)
 	po8030_advanced_config(FORMAT_RGB565, 0, CAPTURED_LINE, IMAGE_BUFFER_SIZE, 2, SUBSAMPLING_X1,
-			SUBSAMPLING_X1);
+						   SUBSAMPLING_X1);
 	dcmi_enable_double_buffering();
 	dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
 	dcmi_prepare();
@@ -45,7 +46,7 @@ static THD_FUNCTION(CaptureImage, arg) {
 	}
 }
 
-static THD_WORKING_AREA(waProcessImage, 4048);
+static THD_WORKING_AREA(waProcessImage, 2048);
 static THD_FUNCTION(ProcessImage, arg) {
 
 	chRegSetThreadName(__FUNCTION__);
@@ -55,8 +56,6 @@ static THD_FUNCTION(ProcessImage, arg) {
 	uint8_t imageRed[IMAGE_BUFFER_SIZE] = { 0 }, imageBlue[IMAGE_BUFFER_SIZE] = { 0 },
 			imageGreen[IMAGE_BUFFER_SIZE] = { 0 };
 	uint16_t redWidth = 0, greenWidth = 0, blueWidth = 0;
-
-	bool send_to_computer = true;
 
 	while (1) {
 		//waits until an image has been captured
@@ -88,16 +87,6 @@ static THD_FUNCTION(ProcessImage, arg) {
 		} else {
 			line_position = STARTING_POS;
 		}
-
-		//for testing purposes only
-		if (send_to_computer) {
-
-			//sends to the computer the image
-			SendUint8ToComputer(imageBlue, IMAGE_BUFFER_SIZE);
-		}
-
-		//invert the bool
-		send_to_computer = !send_to_computer;
 	}
 }
 
@@ -242,9 +231,4 @@ enum color getLineColor(uint16_t redWidth, uint16_t greenWidth, uint16_t blueWid
 void process_image_start(void) {
 	chThdCreateStatic(waProcessImage, sizeof(waProcessImage), NORMALPRIO, ProcessImage, NULL);
 	chThdCreateStatic(waCaptureImage, sizeof(waCaptureImage), NORMALPRIO, CaptureImage, NULL);
-}
-
-uint16_t target_color(void) {
-	if(get_selector()<BLACK) return get_selector();
-	else return BLACK;
 }

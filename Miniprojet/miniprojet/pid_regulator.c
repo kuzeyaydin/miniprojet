@@ -1,24 +1,18 @@
 #include <pid_regulator.h>
-#include "ch.h"
-#include "hal.h"
 #include <math.h>
-#include <usbcfg.h>
-#include <chprintf.h>
-#include <leds.h>
 #include <main.h>
 #include <motors.h>
 #include <sensors/VL53L0X/VL53L0X.h>
 #include <process_image.h>
+#include <colors.h>
+#include <leds.h>
 
-uint16_t speedCorrection = 0;
-uint16_t speedDist = 0;
-uint8_t changestate = 0;
+_Bool changestate = 0;
 
 //robots starts searching after bootup
 enum STATE state = SEARCH;
 
 //internal functions
-void toggle_color_leds(void); //lights leds up according to targeted color
 int16_t pid_regulator(float distance, float goal, float kp, float ki, float kd);
 
 static THD_WORKING_AREA(waPidRegulator, 128);
@@ -50,10 +44,6 @@ static THD_FUNCTION(PidRegulator, arg) {
 			left_motor_set_speed(ROTATION_COEFF * speed_correction);
 
 			if (speed_correction == 0) {
-				set_rgb_led(LED2, 0, 0, 0);
-				set_rgb_led(LED4, 0, 0, 0);
-				set_rgb_led(LED6, 0, 0, 0);
-				set_rgb_led(LED8, 0, 0, 0);
 				state = TARGET;
 				changestate = 1;
 			}
@@ -117,8 +107,8 @@ static THD_FUNCTION(PidRegulator, arg) {
 			speed = pid_regulator(VL53L0X_get_dist_mm() / 10, ARENA_RADIUS,
 								  KP_GOBACK, KI_GOBACK, KD_GOBACK);
 
-			right_motor_set_speed(speed); //right_motor_set_speed(speed - ROTATION_COEFF * speed_correction);
-			left_motor_set_speed(speed); //left_motor_set_speed(speed + ROTATION_COEFF * speed_correction);
+			right_motor_set_speed(speed);
+			left_motor_set_speed(speed);
 
 			if (speed < ERROR_THRESHOLD) {
 				state = SEARCH;
@@ -186,50 +176,4 @@ int16_t pid_regulator(float distance, float goal, float kp, float ki, float kd) 
 
 void pid_regulator_start(void) {
 	chThdCreateStatic(waPidRegulator, sizeof(waPidRegulator), NORMALPRIO+1, PidRegulator, NULL);
-}
-
-void toggle_color_leds(void) {
-	switch(target_color()) {
-	case RED:
-		set_rgb_led(LED2, RGB_MAX_INTENSITY, 0, 0);
-		set_rgb_led(LED4, RGB_MAX_INTENSITY, 0, 0);
-		set_rgb_led(LED6, RGB_MAX_INTENSITY, 0, 0);
-		set_rgb_led(LED8, RGB_MAX_INTENSITY, 0, 0);
-		break;
-	case GREEN:
-		set_rgb_led(LED2, 0, RGB_MAX_INTENSITY, 0);
-		set_rgb_led(LED4, 0, RGB_MAX_INTENSITY, 0);
-		set_rgb_led(LED6, 0, RGB_MAX_INTENSITY, 0);
-		set_rgb_led(LED8, 0, RGB_MAX_INTENSITY, 0);
-		break;
-	case BLUE:
-		set_rgb_led(LED2, 0, 0, RGB_MAX_INTENSITY);
-		set_rgb_led(LED4, 0, 0, RGB_MAX_INTENSITY);
-		set_rgb_led(LED6, 0, 0, RGB_MAX_INTENSITY);
-		set_rgb_led(LED8, 0, 0, RGB_MAX_INTENSITY);
-		break;
-	case YELLOW:
-		set_rgb_led(LED2, RGB_MAX_INTENSITY, RGB_MAX_INTENSITY, 0);
-		set_rgb_led(LED4, RGB_MAX_INTENSITY, RGB_MAX_INTENSITY, 0);
-		set_rgb_led(LED6, RGB_MAX_INTENSITY, RGB_MAX_INTENSITY, 0);
-		set_rgb_led(LED8, RGB_MAX_INTENSITY, RGB_MAX_INTENSITY, 0);
-		break;
-	case MAGENTA:
-		set_rgb_led(LED2, RGB_MAX_INTENSITY, 0, RGB_MAX_INTENSITY);
-		set_rgb_led(LED4, RGB_MAX_INTENSITY, 0, RGB_MAX_INTENSITY);
-		set_rgb_led(LED6, RGB_MAX_INTENSITY, 0, RGB_MAX_INTENSITY);
-		set_rgb_led(LED8, RGB_MAX_INTENSITY, 0, RGB_MAX_INTENSITY);
-		break;
-	case CYAN:
-		set_rgb_led(LED2, 0, RGB_MAX_INTENSITY, RGB_MAX_INTENSITY);
-		set_rgb_led(LED4, 0, RGB_MAX_INTENSITY, RGB_MAX_INTENSITY);
-		set_rgb_led(LED6, 0, RGB_MAX_INTENSITY, RGB_MAX_INTENSITY);
-		set_rgb_led(LED8, 0, RGB_MAX_INTENSITY, RGB_MAX_INTENSITY);
-		break;
-	default:
-		set_rgb_led(LED2, 0, 0, 0);
-		set_rgb_led(LED4, 0, 0, 0);
-		set_rgb_led(LED6, 0, 0, 0);
-		set_rgb_led(LED8, 0, 0, 0);
-	}
 }
